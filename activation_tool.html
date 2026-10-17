@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ابزار فعال‌سازی گوشی‌ها — فرم مرسولات تیپاکس</title>
+<style>
+  body{font-family:Tahoma, 'Segoe UI', Arial, sans-serif; background:#f4f5f7; margin:0; padding:30px; color:#222;}
+  .panel{max-width:520px; margin:0 auto; background:#fff; border-radius:14px; padding:30px; border:1px solid #e3e5e9; box-shadow:0 2px 10px rgba(0,0,0,0.04);}
+  h2{margin-top:0; color:#111;}
+  .hint{font-size:13px; color:#666; line-height:2; background:#fafafa; border:1px solid #eee; border-radius:10px; padding:14px 16px; margin-bottom:20px;}
+  .offline-badge{display:inline-block; background:#e8f7ee; color:#0a7a3d; border:1px solid #bfe8cf; border-radius:20px; padding:4px 14px; font-size:12px; margin-bottom:14px;}
+  label{display:block; font-size:13px; color:#444; margin-bottom:8px; font-weight:bold;}
+  input[type=text]{display:block; width:100%; padding:12px; border:1px solid #ddd; border-radius:8px; font-family:inherit; box-sizing:border-box; font-size:16px; letter-spacing:1px; text-transform:uppercase;}
+  .submit{margin-top:18px; background:#0a7a3d; color:#fff; border:none; padding:12px 28px; border-radius:8px; font-family:inherit; font-size:14px; cursor:pointer; width:100%;}
+  .submit:hover{background:#075c2e;}
+  .resultbox{display:none; margin-top:20px; background:#f6fff9; border:1px solid #cdebd7; border-radius:10px; padding:20px; text-align:center;}
+  .code{font-size:32px; font-weight:bold; letter-spacing:4px; color:#0a7a3d; direction:ltr;}
+  .errorbox{display:none; background:#fff0f0; color:#c40017; border:1px solid #f3c9ce; border-radius:10px; padding:12px; margin-top:16px; font-size:13px;}
+</style>
+</head>
+<body>
+<div class="panel">
+  <span class="offline-badge">کاملاً آفلاین — بدون نیاز به اینترنت</span>
+  <h2>ابزار فعال‌سازی گوشی‌ها</h2>
+  <div class="hint">
+    هر کسی که اپ «فرم مرسولات تیپاکس» رو برای اولین بار رو گوشیش باز کنه، یه «کد گوشی» (مثل <b>A1B2-C3D4</b>) می‌بینه. اون کد رو برات می‌فرسته، تو اینجا وارد می‌کنی و «کد فعال‌سازی» ۶ رقمی رو بهش می‌دی تا بتونه از اپ استفاده کنه. هر کد فعال‌سازی فقط برای همون یه گوشی کار می‌کنه.
+  </div>
+  <label>کد گوشی که برات فرستاده شده</label>
+  <input type="text" id="deviceCodeInput" placeholder="مثلاً A1B2-C3D4">
+  <button class="submit" id="genBtn">ساخت کد فعال‌سازی</button>
+  <div class="errorbox" id="errorBox"></div>
+  <div class="resultbox" id="resultBox">
+    <div style="font-size:13px;color:#666;margin-bottom:8px;">کد فعال‌سازی:</div>
+    <div class="code" id="codeOutput"></div>
+  </div>
+</div>
+
+<script>
+// این رشته باید عیناً با ACTIVATION_SECRET تو LockActivity.kt یکی باشه،
+// وگرنه کدها با هم جور درنمیان.
+const ACTIVATION_SECRET = "tipax-rezashahr-excelfiller-activation-secret-2026";
+
+async function hmacSha256Hex(secret, message) {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw", enc.encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false, ["sign"]
+  );
+  const sigBuffer = await crypto.subtle.sign("HMAC", key, enc.encode(message));
+  return new Uint8Array(sigBuffer);
+}
+
+function bytesToBigIntMod(bytes, mod) {
+  let result = 0n;
+  for (const b of bytes) {
+    result = (result * 256n + BigInt(b)) % mod;
+  }
+  return result;
+}
+
+document.getElementById('genBtn').addEventListener('click', async () => {
+  const errorBox = document.getElementById('errorBox');
+  const resultBox = document.getElementById('resultBox');
+  errorBox.style.display = 'none';
+  resultBox.style.display = 'none';
+
+  const raw = document.getElementById('deviceCodeInput').value.trim().toUpperCase();
+  if (!/^[0-9A-F]{4}-[0-9A-F]{4}$/.test(raw)) {
+    errorBox.textContent = 'کد گوشی باید به شکل XXXX-XXXX (۸ کاراکتر حروف/عدد انگلیسی با یه خط تیره وسط) باشه.';
+    errorBox.style.display = 'block';
+    return;
+  }
+
+  try {
+    const sigBytes = await hmacSha256Hex(ACTIVATION_SECRET, raw);
+    const num = bytesToBigIntMod(sigBytes, 1000000n);
+    const code = num.toString().padStart(6, '0');
+    document.getElementById('codeOutput').textContent = code;
+    resultBox.style.display = 'block';
+  } catch (e) {
+    errorBox.textContent = 'خطا: ' + e.message;
+    errorBox.style.display = 'block';
+  }
+});
+
+document.getElementById('deviceCodeInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') document.getElementById('genBtn').click();
+});
+</script>
+</body>
+</html>

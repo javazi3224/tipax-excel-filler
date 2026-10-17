@@ -1,23 +1,15 @@
 package ir.tipaxrezashahr.excelfiller
 
-import android.Manifest
 import android.app.AlertDialog
-import android.content.ContentValues
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
-import android.os.Environment
-import android.provider.MediaStore
 import android.view.LayoutInflater
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -53,19 +45,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var addressInput: TextInputEditText
     private lateinit var phoneInput: TextInputEditText
     private lateinit var listCountText: android.widget.TextView
-
-    private var pendingExportAction: (() -> Unit)? = null
-
-    private val storagePermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        if (granted) {
-            pendingExportAction?.invoke()
-        } else {
-            Toast.makeText(this, "بدون این مجوز نمی‌تونم فایل رو تو پوشه Download ذخیره کنم.", Toast.LENGTH_LONG).show()
-        }
-        pendingExportAction = null
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -195,16 +174,6 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "اول حداقل یه ردیف به لیست اضافه کن.", Toast.LENGTH_SHORT).show()
             return
         }
-
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q &&
-            ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-            != PackageManager.PERMISSION_GRANTED
-        ) {
-            pendingExportAction = { doExport() }
-            storagePermissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-            return
-        }
-
         doExport()
     }
 
@@ -212,10 +181,9 @@ class MainActivity : AppCompatActivity() {
         val fileName = "tipax_" + SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date()) + ".xlsx"
         Thread {
             try {
-                val uri = writeToDownloads(fileName)
+                val uri = buildExportFile(fileName)
                 runOnUiThread {
                     if (uri != null) {
-                        Toast.makeText(this, "فایل ساخته و تو پوشه Download ذخیره شد.", Toast.LENGTH_LONG).show()
                         shareFile(uri)
                     } else {
                         Toast.makeText(this, "ساخت فایل با خطا مواجه شد.", Toast.LENGTH_LONG).show()
@@ -229,34 +197,19 @@ class MainActivity : AppCompatActivity() {
         }.start()
     }
 
-    /** فایل رو تو پوشه‌ی Download گوشی می‌سازه و Uri قابل اشتراک‌گذاریش رو برمی‌گردونه. */
-    private fun writeToDownloads(fileName: String): Uri? {
-        val mimeType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            val values = ContentValues().apply {
-                put(MediaStore.Downloads.DISPLAY_NAME, fileName)
-                put(MediaStore.Downloads.MIME_TYPE, mimeType)
-                put(MediaStore.Downloads.IS_PENDING, 1)
-            }
-            val resolver = contentResolver
-            val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values) ?: return null
-            resolver.openOutputStream(uri)?.use { out ->
-                ExcelFiller.build(this, rows.toList(), out)
-            } ?: return null
-            values.clear()
-            values.put(MediaStore.Downloads.IS_PENDING, 0)
-            resolver.update(uri, values, null, null)
-            return uri
-        } else {
-            val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-            if (!downloadsDir.exists()) downloadsDir.mkdirs()
-            val file = File(downloadsDir, fileName)
-            FileOutputStream(file).use { out ->
-                ExcelFiller.build(this, rows.toList(), out)
-            }
-            return FileProvider.getUriForFile(this, "ir.tipaxrezashahr.excelfiller.fileprovider", file)
+    /**
+     * فایل اکسل رو تو فضای داخلی (خصوصی) خود اپ می‌سازه - رو گوشی جایی ذخیره
+     * نمی‌مونه که از بیرون دیده بشه، فقط برای یه بار اشتراک‌گذاری ساخته
+     * می‌شه. Uri قابل‌اشتراک‌گذاریش (از طریق FileProvider) رو برمی‌گردونه.
+     */
+    private fun buildExportFile(fileName: String): Uri? {
+        val exportsDir = File(filesDir, "exports")
+        if (!exportsDir.exists()) exportsDir.mkdirs()
+        val file = File(exportsDir, fileName)
+        FileOutputStream(file).use { out ->
+            ExcelFiller.build(this, rows.toList(), out)
         }
+        return FileProvider.getUriForFile(this, "ir.tipaxrezashahr.excelfiller.fileprovider", file)
     }
 
     private fun showChangePasswordDialog() {
@@ -277,7 +230,7 @@ class MainActivity : AppCompatActivity() {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 errorText.text = ""
                 val prefs = getSharedPreferences(LockActivity.PREFS_NAME, MODE_PRIVATE)
-                val storedHash = prefs.getString(LockActivity.KEY_HASH, null)
+                val storedHash = prefs.getString(LockActivity.KEY_PWD_HASH, null)
                 val current = currentInput.text?.toString().orEmpty()
                 val newPwd = newInput.text?.toString().orEmpty()
                 val confirm = confirmInput.text?.toString().orEmpty()
@@ -293,7 +246,7 @@ class MainActivity : AppCompatActivity() {
                         errorText.text = "رمز جدید و تکرارش یکی نیستن"
                     }
                     else -> {
-                        prefs.edit().putString(LockActivity.KEY_HASH, LockActivity.hash(newPwd)).apply()
+                        prefs.edit().putString(LockActivity.KEY_PWD_HASH, LockActivity.hash(newPwd)).apply()
                         Toast.makeText(this, "رمز اپ با موفقیت عوض شد.", Toast.LENGTH_SHORT).show()
                         dialog.dismiss()
                     }
@@ -312,7 +265,7 @@ class MainActivity : AppCompatActivity() {
         try {
             startActivity(Intent.createChooser(intent, "اشتراک‌گذاری فایل اکسل"))
         } catch (e: Exception) {
-            // کاربر می‌تونه فایل رو خودش از پوشه‌ی Download پیدا کنه
+            Toast.makeText(this, "هیچ اپی برای اشتراک‌گذاری پیدا نشد.", Toast.LENGTH_LONG).show()
         }
     }
 }

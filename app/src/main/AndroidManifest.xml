@@ -2,9 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!-- تایپ صوتی از طریق میکروفون خودِ کیبورد گوشی (مثلاً Gboard) کار می‌کنه
-         و نیازی به مجوز میکروفون جداگانه تو این اپ نداره. -->
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
-        android:maxSdkVersion="28" />
+         و نیازی به مجوز میکروفون جداگانه تو این اپ نداره. فایل اکسل هم فقط
+         تو فضای داخلی خود اپ ساخته می‌شه و فقط برای اشتراک‌گذاری استفاده
+         می‌شه، پس نیازی به مجوز ذخیره‌سازی هم نیست. -->
 
     <application
         android:allowBackup="true"
