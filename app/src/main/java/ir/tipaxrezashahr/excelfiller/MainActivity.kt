@@ -1,6 +1,7 @@
 package ir.tipaxrezashahr.excelfiller
 
 import android.Manifest
+import android.app.AlertDialog
 import android.content.ContentValues
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -9,8 +10,10 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
+import android.view.LayoutInflater
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -95,6 +98,7 @@ class MainActivity : AppCompatActivity() {
         findViewById<android.view.View>(R.id.addRowButton).setOnClickListener { onAddRow() }
         findViewById<android.view.View>(R.id.exportButton).setOnClickListener { onExportClicked() }
         findViewById<android.view.View>(R.id.clearButton).setOnClickListener { onClearClicked() }
+        findViewById<android.view.View>(R.id.changePasswordText).setOnClickListener { showChangePasswordDialog() }
 
         updateCountText()
     }
@@ -253,6 +257,50 @@ class MainActivity : AppCompatActivity() {
             }
             return FileProvider.getUriForFile(this, "ir.tipaxrezashahr.excelfiller.fileprovider", file)
         }
+    }
+
+    private fun showChangePasswordDialog() {
+        val view = LayoutInflater.from(this).inflate(R.layout.dialog_change_password, null)
+        val currentInput = view.findViewById<TextInputEditText>(R.id.currentPasswordInput)
+        val newInput = view.findViewById<TextInputEditText>(R.id.newPasswordInput)
+        val confirmInput = view.findViewById<TextInputEditText>(R.id.newPasswordConfirmInput)
+        val errorText = view.findViewById<TextView>(R.id.changePasswordErrorText)
+
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("تغییر رمز اپ")
+            .setView(view)
+            .setPositiveButton("تغییر رمز", null)
+            .setNegativeButton("انصراف", null)
+            .create()
+
+        dialog.setOnShowListener {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                errorText.text = ""
+                val prefs = getSharedPreferences(LockActivity.PREFS_NAME, MODE_PRIVATE)
+                val storedHash = prefs.getString(LockActivity.KEY_HASH, null)
+                val current = currentInput.text?.toString().orEmpty()
+                val newPwd = newInput.text?.toString().orEmpty()
+                val confirm = confirmInput.text?.toString().orEmpty()
+
+                when {
+                    storedHash == null || storedHash != LockActivity.hash(current) -> {
+                        errorText.text = "رمز فعلی اشتباهه"
+                    }
+                    newPwd.length < 4 -> {
+                        errorText.text = "رمز جدید باید حداقل ۴ کاراکتر باشه"
+                    }
+                    newPwd != confirm -> {
+                        errorText.text = "رمز جدید و تکرارش یکی نیستن"
+                    }
+                    else -> {
+                        prefs.edit().putString(LockActivity.KEY_HASH, LockActivity.hash(newPwd)).apply()
+                        Toast.makeText(this, "رمز اپ با موفقیت عوض شد.", Toast.LENGTH_SHORT).show()
+                        dialog.dismiss()
+                    }
+                }
+            }
+        }
+        dialog.show()
     }
 
     private fun shareFile(uri: Uri) {

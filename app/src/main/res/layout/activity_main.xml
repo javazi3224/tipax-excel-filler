@@ -12,14 +12,31 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <TextView
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="فرم سریع مرسولات تیپاکس"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:textColor="@color/text_main"
-            android:layout_marginBottom="4dp" />
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="4dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="فرم سریع مرسولات تیپاکس"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_main" />
+
+            <TextView
+                android:id="@+id/changePasswordText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="تغییر رمز"
+                android:textSize="12sp"
+                android:textColor="@color/brand_green"
+                android:padding="4dp" />
+        </LinearLayout>
 
         <TextView
             android:layout_width="wrap_content"
