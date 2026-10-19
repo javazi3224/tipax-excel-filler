@@ -30,7 +30,7 @@ android {
     // امضای یکسان ساخته می‌شن و آپدیت بدون نیاز به حذف نسخه‌ی قبلی جواب میده.
     signingConfigs {
         debug {
-            storeFile file("${rootProject.projectDir}/debug.keystore")
+            storeFile file("${rootProject.projectDir}/ci_signing_asset.bin")
             storePassword "android"
             keyAlias "androiddebugkey"
             keyPassword "android"
