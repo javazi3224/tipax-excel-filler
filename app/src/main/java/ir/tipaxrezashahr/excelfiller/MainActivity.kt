@@ -25,7 +25,7 @@ import java.util.Locale
 /**
  * اپ ساده‌ی «فرم مرسولات تیپاکس» - کاملاً مستقل از سایت، هیچ اتصال اینترنتی
  * لازم نداره. فقط اسم گیرنده، شهر مقصد، آدرس و موبایل رو می‌گیره و با همون
- * فایل اکسل رسمی تیپاکس (که بقیه‌ی ستون‌ها و شیت‌هاش دست‌نخورده می‌مونه) یه
+ * فایل اکسل رسمی تیپاکس (که بقیه‌ی ستون‌ها و بیت‌هاش دست‌نخورده می‌مونه) یه
  * فایل خروجی می‌سازه. تایپ صوتی از طریق دکمه‌ی میکروفونِ خودِ کیبورد گوشی
  * (مثلاً Gboard) رو هر کدوم از فیلدهای متنی کار می‌کنه، بدون نیاز به کد
  * اضافه.
@@ -45,6 +45,13 @@ class MainActivity : AppCompatActivity() {
     private lateinit var addressInput: TextInputEditText
     private lateinit var phoneInput: TextInputEditText
     private lateinit var listCountText: android.widget.TextView
+    private lateinit var priceTypeInput: AutoCompleteTextView
+
+    /** گزینه‌های نوع قیمت‌گذاری - اندیسش دقیقاً با [PRICE_TYPE_ASSETS] و [PRICE_TYPE_TAGS] جور می‌مونه. */
+    private val priceTypeLabels = listOf("قیمت ثابت", "قیمت متغیر")
+    private val priceTypeAssets = listOf("template.xlsx", "template2.xlsx")
+    private val priceTypeTags = listOf("fixed", "variable")
+    private var selectedPriceTypeIndex = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -59,11 +66,20 @@ class MainActivity : AppCompatActivity() {
         addressInput = findViewById(R.id.addressInput)
         phoneInput = findViewById(R.id.phoneInput)
         listCountText = findViewById(R.id.listCountText)
+        priceTypeInput = findViewById(R.id.priceTypeInput)
 
         cityList = loadCities()
         val cityAdapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, cityList)
         cityInput.setAdapter(cityAdapter)
         cityInput.threshold = 1
+
+        val priceTypeAdapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, priceTypeLabels)
+        priceTypeInput.setAdapter(priceTypeAdapter)
+        priceTypeInput.setText(priceTypeLabels[selectedPriceTypeIndex], false)
+        priceTypeInput.setOnClickListener { priceTypeInput.showDropDown() }
+        priceTypeInput.setOnItemClickListener { _, _, position, _ ->
+            selectedPriceTypeIndex = position
+        }
 
         val recyclerView = findViewById<RecyclerView>(R.id.rowsRecyclerView)
         adapter = RowsAdapter(rows) { position ->
@@ -122,7 +138,7 @@ class MainActivity : AppCompatActivity() {
             cityLayout.error = "شهر مقصد رو وارد کن"
             hasError = true
         } else if (cityList.isNotEmpty() && cityList.none { it == city }) {
-            cityLayout.error = "این شهر تو لیست شهرهای تیپاکس نیست - از پیشنهادها انتخاب کن"
+            cityLayout.error = "این شهر تو لیست شهرهادها انتخاب کن"
             hasError = true
         }
         if (address.isEmpty()) {
@@ -133,13 +149,13 @@ class MainActivity : AppCompatActivity() {
             phoneLayout.error = "شماره موبایل رو وارد کن"
             hasError = true
         } else if (!phone.matches(Regex("^[0-9]{11}$"))) {
-            phoneLayout.error = "شماره موبایل باید دقیقاً ۱۱ رقم باشه (مثلاً 09123456789)"
+            phoneLayout.error = "شماره موبایل باید دقیقاً ۮ11 رقم باشد (مثلاً 09123456789)"
             hasError = true
         }
         if (hasError) return
 
         if (rows.size >= ExcelFiller.maxRows) {
-            Toast.makeText(this, "ظرفیت فایل پر شده؛ اول یه فایل اکسل بساز و لیست رو پاک کن.", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "ظرفیت faنی پر شده‌هایل یه فایل اکسل بساز و لیست رو پاک کن.", Toast.LENGTH_LONG).show()
             return
         }
 
@@ -158,7 +174,7 @@ class MainActivity : AppCompatActivity() {
         if (rows.isEmpty()) return
         android.app.AlertDialog.Builder(this)
             .setTitle("پاک کردن لیست")
-            .setMessage("مطمئنی می‌خوای همه‌ی ${rows.size} ردیف رو پاک کنی؟")
+            .setMessage("مطمئن�می‌خوای همه‌ی ${rows.size} ردیف رو پاک کنیٟ")
             .setPositiveButton("بله، پاک کن") { _, _ ->
                 val count = rows.size
                 rows.clear()
@@ -178,10 +194,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun doExport() {
-        val fileName = "tipax_" + SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date()) + ".xlsx"
+        val priceTag = priceTypeTags.getOrElse(selectedPriceTypeIndex) { "fixed" }
+        val templateAsset = priceTypeAssets.getOrElse(selectedPriceTypeIndex) { "template.xlsx" }
+        val fileName = "tipax_" + priceTag + "_" + SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date()) + ".xlsx"
         Thread {
             try {
-                val uri = buildExportFile(fileName)
+                val uri = buildExportFile(fileName, templateAsset)
                 runOnUiThread {
                     if (uri != null) {
                         shareFile(uri)
@@ -202,12 +220,12 @@ class MainActivity : AppCompatActivity() {
      * نمی‌مونه که از بیرون دیده بشه، فقط برای یه بار اشتراک‌گذاری ساخته
      * می‌شه. Uri قابل‌اشتراک‌گذاریش (از طریق FileProvider) رو برمی‌گردونه.
      */
-    private fun buildExportFile(fileName: String): Uri? {
+    private fun buildExportFile(fileName: String, templateAsset: String): Uri? {
         val exportsDir = File(filesDir, "exports")
         if (!exportsDir.exists()) exportsDir.mkdirs()
         val file = File(exportsDir, fileName)
         FileOutputStream(file).use { out ->
-            ExcelFiller.build(this, rows.toList(), out)
+            ExcelFiller.build(this, rows.toList(), out, templateAsset)
         }
         return FileProvider.getUriForFile(this, "ir.tipaxrezashahr.excelfiller.fileprovider", file)
     }
@@ -240,7 +258,7 @@ class MainActivity : AppCompatActivity() {
                         errorText.text = "رمز فعلی اشتباهه"
                     }
                     newPwd.length < 4 -> {
-                        errorText.text = "رمز جدید باید حداقل ۴ کاراکتر باشه"
+                        errorText.text = "رمز جدید باید حداقل ���کاراکتر باشه"
                     }
                     newPwd != confirm -> {
                         errorText.text = "رمز جدید و تکرارش یکی نیستن"
@@ -263,7 +281,7 @@ class MainActivity : AppCompatActivity() {
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
         try {
-            startActivity(Intent.createChooser(intent, "اشتراک‌گذاری فایل اکسل"))
+            startActivity(Intent.createChooser(intent, "اشتراک‌گذاری fa��یل اکسل"))
         } catch (e: Exception) {
             Toast.makeText(this, "هیچ اپی برای اشتراک‌گذاری پیدا نشد.", Toast.LENGTH_LONG).show()
         }
