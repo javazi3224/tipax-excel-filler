@@ -59,9 +59,17 @@ object ExcelFiller {
 
     /**
      * فایل اکسل نهایی رو می‌سازه و تو [outputStream] می‌نویسه.
+     * [templateAsset] اسم فایل قالب تو پوشه‌ی assets هست - پیش‌فرض همون قالب
+     * «قیمت ثابت» (template.xlsx)؛ برای قالب «قیمت متغیر» مقدار
+     * "template2.xlsx" پاس داده می‌شه.
      * @throws IllegalArgumentException اگه تعداد ردیف‌ها از ظرفیت تمپلیت بیشتر باشه
      */
-    fun build(context: Context, rows: List<ShipmentRow>, outputStream: OutputStream) {
+    fun build(
+        context: Context,
+        rows: List<ShipmentRow>,
+        outputStream: OutputStream,
+        templateAsset: String = "template.xlsx"
+    ) {
         require(rows.isNotEmpty()) { "لیست خالیه" }
         require(rows.size <= maxRows) { "تعداد ردیف‌ها از ظرفیت فایل (حداکثر $maxRows ردیف) بیشتره" }
 
@@ -69,7 +77,7 @@ object ExcelFiller {
         // پس اول تمپلیت رو تو یه فایل موقت کپی می‌کنیم.
         val tempTemplate = File.createTempFile("tipax_template", ".xlsx", context.cacheDir)
         try {
-            context.assets.open("template.xlsx").use { input ->
+            context.assets.open(templateAsset).use { input ->
                 FileOutputStream(tempTemplate).use { out -> input.copyTo(out) }
             }
 
