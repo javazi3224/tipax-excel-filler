@@ -21,7 +21,26 @@ android {
         noCompress += "xlsx"
     }
 
+    // قبلاً debug.keystore هر بار توسط خود گریدل/CI به‌صورت رندوم ساخته می‌شد،
+    // یعنی هر بیلد با یه کلید امضای متفاوت ساخته می‌شد. نتیجه‌ش این بود که
+    // نصب نسخه‌ی جدید روی گوشی‌هایی که نسخه‌ی قبلی رو نصب داشتن (مخصوصاً
+    // اندروید ۱۴ که پیام خطای نصب رو مبهم‌تر نشون می‌ده) با خطای
+    // «امضا با نسخه‌ی نصب‌شده نمی‌خونه» رد می‌شد. با ثابت کردن کلید دیباگ
+    // (همین فایل debug.keystore تو ریشه‌ی پروژه) همه‌ی بیلدها همیشه با یه
+    // امضای یکسان ساخته می‌شن و آپدیت بدون نیاز به حذف نسخه‌ی قبلی جواب میده.
+    signingConfigs {
+        debug {
+            storeFile file("${rootProject.projectDir}/debug.keystore")
+            storePassword "android"
+            keyAlias "androiddebugkey"
+            keyPassword "android"
+        }
+    }
+
     buildTypes {
+        debug {
+            signingConfig signingConfigs.debug
+        }
         release {
             minifyEnabled false
         }
