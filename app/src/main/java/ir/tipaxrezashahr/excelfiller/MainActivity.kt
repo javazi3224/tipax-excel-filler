@@ -25,7 +25,7 @@ import java.util.Locale
 /**
  * اپ ساده‌ی «فرم مرسولات تیپاکس» - کاملاً مستقل از سایت، هیچ اتصال اینترنتی
  * لازم نداره. فقط اسم گیرنده، شهر مقصد، آدرس و موبایل رو می‌گیره و با همون
- * فایل اکسل رسمی تیپاکس (که بقیه‌ی ستون‌ها و بیت‌هاش دست‌نخورده می‌مونه) یه
+ * فایل اکسل رسمی تیپاکس (که بقیه‌ی ستون‌ها و شیت‌هاش دست‌نخورده می‌مونه) یه
  * فایل خروجی می‌سازه. تایپ صوتی از طریق دکمه‌ی میکروفونِ خودِ کیبورد گوشی
  * (مثلاً Gboard) رو هر کدوم از فیلدهای متنی کار می‌کنه، بدون نیاز به کد
  * اضافه.
@@ -138,7 +138,7 @@ class MainActivity : AppCompatActivity() {
             cityLayout.error = "شهر مقصد رو وارد کن"
             hasError = true
         } else if (cityList.isNotEmpty() && cityList.none { it == city }) {
-            cityLayout.error = "این شهر تو لیست شهرهادها انتخاب کن"
+            cityLayout.error = "این شهر تو لیست شهرهای تیپاکس نیست - از پیشنهادها انتخاب کن"
             hasError = true
         }
         if (address.isEmpty()) {
@@ -149,13 +149,13 @@ class MainActivity : AppCompatActivity() {
             phoneLayout.error = "شماره موبایل رو وارد کن"
             hasError = true
         } else if (!phone.matches(Regex("^[0-9]{11}$"))) {
-            phoneLayout.error = "شماره موبایل باید دقیقاً ۮ11 رقم باشد (مثلاً 09123456789)"
+            phoneLayout.error = "شماره موبایل باید دقیقاً ۱۱ رقم باشه (مثلاً 09123456789)"
             hasError = true
         }
         if (hasError) return
 
         if (rows.size >= ExcelFiller.maxRows) {
-            Toast.makeText(this, "ظرفیت faنی پر شده‌هایل یه فایل اکسل بساز و لیست رو پاک کن.", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "ظرفیت فایل پر شده؛ اول یه فایل اکسل بساز و لیست رو پاک کن.", Toast.LENGTH_LONG).show()
             return
         }
 
@@ -174,7 +174,7 @@ class MainActivity : AppCompatActivity() {
         if (rows.isEmpty()) return
         android.app.AlertDialog.Builder(this)
             .setTitle("پاک کردن لیست")
-            .setMessage("مطمئن�می‌خوای همه‌ی ${rows.size} ردیف رو پاک کنیٟ")
+            .setMessage("مطمئنی می‌خوای همه‌ی ${rows.size} ردیف رو پاک کنی؟")
             .setPositiveButton("بله، پاک کن") { _, _ ->
                 val count = rows.size
                 rows.clear()
@@ -258,7 +258,7 @@ class MainActivity : AppCompatActivity() {
                         errorText.text = "رمز فعلی اشتباهه"
                     }
                     newPwd.length < 4 -> {
-                        errorText.text = "رمز جدید باید حداقل ���کاراکتر باشه"
+                        errorText.text = "رمز جدید باید حداقل ۴ کاراکتر باشه"
                     }
                     newPwd != confirm -> {
                         errorText.text = "رمز جدید و تکرارش یکی نیستن"
@@ -281,7 +281,7 @@ class MainActivity : AppCompatActivity() {
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
         try {
-            startActivity(Intent.createChooser(intent, "اشتراک‌گذاری fa��یل اکسل"))
+            startActivity(Intent.createChooser(intent, "اشتراک‌گذاری فایل اکسل"))
         } catch (e: Exception) {
             Toast.makeText(this, "هیچ اپی برای اشتراک‌گذاری پیدا نشد.", Toast.LENGTH_LONG).show()
         }
