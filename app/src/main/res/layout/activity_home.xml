@@ -116,6 +116,15 @@
             android:textSize="18sp"
             android:backgroundTint="#37474f"
             android:layout_marginTop="16dp" />
+
+        <TextView
+            android:id="@+id/versionText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="13sp"
+            android:textColor="@color/text_muted"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="28dp" />
     </LinearLayout>
     </ScrollView>
 </LinearLayout>
