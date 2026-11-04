@@ -45,7 +45,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var addressInput: TextInputEditText
     private lateinit var phoneInput: TextInputEditText
     private lateinit var listCountText: android.widget.TextView
-    private lateinit var priceTypeInput: AutoCompleteTextView
 
     private lateinit var senderNameInput: AutoCompleteTextView
     private lateinit var senderAddrInput: AutoCompleteTextView
@@ -81,24 +80,14 @@ class MainActivity : AppCompatActivity() {
         addressInput = findViewById(R.id.addressInput)
         phoneInput = findViewById(R.id.phoneInput)
         listCountText = findViewById(R.id.listCountText)
-        priceTypeInput = findViewById(R.id.priceTypeInput)
 
         cityList = loadCities()
         val cityAdapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, cityList)
         cityInput.setAdapter(cityAdapter)
         cityInput.threshold = 1
 
-        val priceTypeAdapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, priceTypeLabels)
-        priceTypeInput.setAdapter(priceTypeAdapter)
-        priceTypeInput.setText(priceTypeLabels[selectedPriceTypeIndex], false)
-        priceTypeInput.setOnClickListener { priceTypeInput.showDropDown() }
-        priceTypeInput.setOnItemClickListener { _, _, position, _ ->
-            if (selectedPriceTypeIndex != position) {
-                selectedPriceTypeIndex = position
-                clearSenderFields()
-                loadSenderLists()
-            }
-        }
+        selectedPriceTypeIndex = intent.getIntExtra(EXTRA_PRICE_INDEX, 0).coerceIn(0, 1)
+        findViewById<TextView>(R.id.screenTitle).text = "ثبت مرسولات — " + priceTypeLabels[selectedPriceTypeIndex]
 
         senderNameInput = findViewById(R.id.senderNameInput)
         senderAddrInput = findViewById(R.id.senderAddrInput)
@@ -130,7 +119,6 @@ class MainActivity : AppCompatActivity() {
         findViewById<android.view.View>(R.id.addRowButton).setOnClickListener { onAddRow() }
         findViewById<android.view.View>(R.id.exportButton).setOnClickListener { onExportClicked() }
         findViewById<android.view.View>(R.id.clearButton).setOnClickListener { onClearClicked() }
-        findViewById<android.view.View>(R.id.changePasswordText).setOnClickListener { showChangePasswordDialog() }
 
         updateCountText()
     }
@@ -320,50 +308,6 @@ class MainActivity : AppCompatActivity() {
         return FileProvider.getUriForFile(this, "ir.tipaxrezashahr.excelfiller.fileprovider", file)
     }
 
-    private fun showChangePasswordDialog() {
-        val view = LayoutInflater.from(this).inflate(R.layout.dialog_change_password, null)
-        val currentInput = view.findViewById<TextInputEditText>(R.id.currentPasswordInput)
-        val newInput = view.findViewById<TextInputEditText>(R.id.newPasswordInput)
-        val confirmInput = view.findViewById<TextInputEditText>(R.id.newPasswordConfirmInput)
-        val errorText = view.findViewById<TextView>(R.id.changePasswordErrorText)
-
-        val dialog = AlertDialog.Builder(this)
-            .setTitle("تغییر رمز اپ")
-            .setView(view)
-            .setPositiveButton("تغییر رمز", null)
-            .setNegativeButton("انصراف", null)
-            .create()
-
-        dialog.setOnShowListener {
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-                errorText.text = ""
-                val prefs = getSharedPreferences(LockActivity.PREFS_NAME, MODE_PRIVATE)
-                val storedHash = prefs.getString(LockActivity.KEY_PWD_HASH, null)
-                val current = currentInput.text?.toString().orEmpty()
-                val newPwd = newInput.text?.toString().orEmpty()
-                val confirm = confirmInput.text?.toString().orEmpty()
-
-                when {
-                    storedHash == null || storedHash != LockActivity.hash(current) -> {
-                        errorText.text = "رمز فعلی اشتباهه"
-                    }
-                    newPwd.length < 4 -> {
-                        errorText.text = "رمز جدید باید حداقل ۴ کاراکتر باشه"
-                    }
-                    newPwd != confirm -> {
-                        errorText.text = "رمز جدید و تکرارش یکی نیستن"
-                    }
-                    else -> {
-                        prefs.edit().putString(LockActivity.KEY_PWD_HASH, LockActivity.hash(newPwd)).apply()
-                        Toast.makeText(this, "رمز اپ با موفقیت عوض شد.", Toast.LENGTH_SHORT).show()
-                        dialog.dismiss()
-                    }
-                }
-            }
-        }
-        dialog.show()
-    }
-
     private fun shareFile(uri: Uri) {
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -375,5 +319,9 @@ class MainActivity : AppCompatActivity() {
         } catch (e: Exception) {
             Toast.makeText(this, "هیچ اپی برای اشتراک‌گذاری پیدا نشد.", Toast.LENGTH_LONG).show()
         }
+    }
+
+    companion object {
+        const val EXTRA_PRICE_INDEX = "price_index"
     }
 }

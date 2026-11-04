@@ -53,6 +53,13 @@ class LockActivity : AppCompatActivity() {
         setContentView(R.layout.activity_lock)
 
         prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+
+        // گوشی قبلاً فعال شده؟ رمز شخصی دیگه نداریم - مستقیم برو صفحه‌ی اول.
+        if (prefs.getString(KEY_ACTIVATED_DEVICE, null) == deviceCode(this)) {
+            proceed()
+            return
+        }
+
         subtitleText = findViewById(R.id.lockSubtitleText)
         deviceCodeText = findViewById(R.id.deviceCodeText)
         deviceCodeHintText = findViewById(R.id.deviceCodeHintText)
@@ -133,9 +140,7 @@ class LockActivity : AppCompatActivity() {
         if (entered == expected) {
             prefs.edit().putString(KEY_ACTIVATED_DEVICE, myDeviceCode).apply()
             Toast.makeText(this, "گوشی فعال شد.", Toast.LENGTH_SHORT).show()
-            mode = if (prefs.getString(KEY_PWD_HASH, null) == null) Mode.SETUP_PASSWORD else Mode.LOGIN
-            passwordInput.text?.clear()
-            setupForMode()
+            proceed()
         } else {
             errorText.text = "کد فعال‌سازی اشتباهه. مطمئن شو همون کدی که احسان برای این گوشی فرستاده رو وارد کردی."
         }
@@ -170,7 +175,7 @@ class LockActivity : AppCompatActivity() {
     }
 
     private fun proceed() {
-        startActivity(Intent(this, MainActivity::class.java))
+        startActivity(Intent(this, HomeActivity::class.java))
         finish()
     }
 
