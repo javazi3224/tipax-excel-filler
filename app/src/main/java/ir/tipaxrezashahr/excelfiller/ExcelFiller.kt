@@ -16,6 +16,14 @@ import java.util.zip.ZipOutputStream
  * (استایل‌ها، لیست شهرها، شیت‌های کمکی و غیره) رو دست‌نخورده نگه می‌داره تا
  * خروجی دقیقاً با فرمتی که سایت تیپاکس قبول می‌کنه سازگار بمونه.
  */
+/** مقادیر ثابتِ ردیف‌ها: فرستنده (A)، عنوان آدرس فرستنده (B)، عنوان مرسوله (C)، نوع سرویس (J). */
+data class SenderInfo(
+    val senderName: String,
+    val addressTitle: String,
+    val packageTitle: String,
+    val service: String
+)
+
 object ExcelFiller {
 
     private const val SHEET1_ENTRY = "xl/worksheets/sheet1.xml"
@@ -36,14 +44,20 @@ object ExcelFiller {
             .replace("\n", " ")
     }
 
-    private fun buildSheetXml(template: String, rows: List<ShipmentRow>): String {
-        val values = HashMap<String, String>(rows.size * 4)
+    private fun buildSheetXml(template: String, rows: List<ShipmentRow>, sender: SenderInfo?): String {
+        val values = HashMap<String, String>(rows.size * 8)
         rows.forEachIndexed { idx, row ->
             val r = FIRST_DATA_ROW + idx
             values["E$r"] = row.recipientName
             values["F$r"] = row.city
             values["G$r"] = row.address
             values["I$r"] = row.phone
+            if (sender != null) {
+                values["A$r"] = sender.senderName
+                values["B$r"] = sender.addressTitle
+                values["C$r"] = sender.packageTitle
+                values["J$r"] = sender.service
+            }
         }
         return selfClosingCell.replace(template) { match ->
             val cellRef = match.groupValues[1]
@@ -52,7 +66,7 @@ object ExcelFiller {
             if (text == null) {
                 match.value
             } else {
-                "<x:c r=\"$cellRef\"$attrs t=\"inlineStr\"><x:is><x:t>${xmlEscape(text)}</x:t></x:is></x:c>"
+                "<x:c r=\"$cellRef\"$attrs t=\"inlineStr\"><x:is><x:t xml:space=\"preserve\">${xmlEscape(text)}</x:t></x:is></x:c>"
             }
         }
     }
@@ -68,7 +82,8 @@ object ExcelFiller {
         context: Context,
         rows: List<ShipmentRow>,
         outputStream: OutputStream,
-        templateAsset: String = "template.xlsx"
+        templateAsset: String = "template.xlsx",
+        sender: SenderInfo? = null
     ) {
         require(rows.isNotEmpty()) { "لیست خالیه" }
         require(rows.size <= maxRows) { "تعداد ردیف‌ها از ظرفیت فایل (حداکثر $maxRows ردیف) بیشتره" }
@@ -92,7 +107,7 @@ object ExcelFiller {
                         if (entry.name == SHEET1_ENTRY) {
                             val xml = zipFile.getInputStream(entry).readBytes()
                                 .toString(Charset.forName("UTF-8"))
-                            val filled = buildSheetXml(xml, rows)
+                            val filled = buildSheetXml(xml, rows, sender)
                             zipOut.write(filled.toByteArray(Charset.forName("UTF-8")))
                         } else {
                             zipFile.getInputStream(entry).use { it.copyTo(zipOut) }

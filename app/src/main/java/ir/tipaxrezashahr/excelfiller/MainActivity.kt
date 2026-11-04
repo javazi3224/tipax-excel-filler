@@ -47,6 +47,21 @@ class MainActivity : AppCompatActivity() {
     private lateinit var listCountText: android.widget.TextView
     private lateinit var priceTypeInput: AutoCompleteTextView
 
+    private lateinit var senderNameInput: AutoCompleteTextView
+    private lateinit var senderAddrInput: AutoCompleteTextView
+    private lateinit var packageInput: AutoCompleteTextView
+    private lateinit var serviceInput: AutoCompleteTextView
+    private lateinit var senderNameLayout: TextInputLayout
+    private lateinit var senderAddrLayout: TextInputLayout
+    private lateinit var packageLayout: TextInputLayout
+    private lateinit var serviceLayout: TextInputLayout
+    private lateinit var senderNameAdapter: SearchAdapter
+    private lateinit var senderAddrAdapter: SearchAdapter
+    private lateinit var packageAdapter: SearchAdapter
+    private lateinit var serviceAdapter: SearchAdapter
+    private val listAssets = listOf("lists_fixed.txt", "lists_variable.txt")
+    private var listsLoadSeq = 0
+
     /** گزینه‌های نوع قیمت‌گذاری - اندیسش دقیقاً با [PRICE_TYPE_ASSETS] و [PRICE_TYPE_TAGS] جور می‌مونه. */
     private val priceTypeLabels = listOf("قیمت ثابت", "قیمت متغیر")
     private val priceTypeAssets = listOf("template.xlsx", "template2.xlsx")
@@ -78,8 +93,30 @@ class MainActivity : AppCompatActivity() {
         priceTypeInput.setText(priceTypeLabels[selectedPriceTypeIndex], false)
         priceTypeInput.setOnClickListener { priceTypeInput.showDropDown() }
         priceTypeInput.setOnItemClickListener { _, _, position, _ ->
-            selectedPriceTypeIndex = position
+            if (selectedPriceTypeIndex != position) {
+                selectedPriceTypeIndex = position
+                clearSenderFields()
+                loadSenderLists()
+            }
         }
+
+        senderNameInput = findViewById(R.id.senderNameInput)
+        senderAddrInput = findViewById(R.id.senderAddrInput)
+        packageInput = findViewById(R.id.packageInput)
+        serviceInput = findViewById(R.id.serviceInput)
+        senderNameLayout = findViewById(R.id.senderNameLayout)
+        senderAddrLayout = findViewById(R.id.senderAddrLayout)
+        packageLayout = findViewById(R.id.packageLayout)
+        serviceLayout = findViewById(R.id.serviceLayout)
+        senderNameAdapter = SearchAdapter(this)
+        senderAddrAdapter = SearchAdapter(this)
+        packageAdapter = SearchAdapter(this)
+        serviceAdapter = SearchAdapter(this)
+        setupSearchBox(senderNameInput, senderNameAdapter)
+        setupSearchBox(senderAddrInput, senderAddrAdapter)
+        setupSearchBox(packageInput, packageAdapter)
+        setupSearchBox(serviceInput, serviceAdapter)
+        loadSenderLists()
 
         val recyclerView = findViewById<RecyclerView>(R.id.rowsRecyclerView)
         adapter = RowsAdapter(rows) { position ->
@@ -96,6 +133,51 @@ class MainActivity : AppCompatActivity() {
         findViewById<android.view.View>(R.id.changePasswordText).setOnClickListener { showChangePasswordDialog() }
 
         updateCountText()
+    }
+
+    private fun setupSearchBox(box: AutoCompleteTextView, ad: SearchAdapter) {
+        box.setAdapter(ad)
+        box.threshold = 1
+        box.setOnClickListener { if (box.text.isNullOrEmpty()) box.showDropDown() }
+        box.setOnFocusChangeListener { _, has -> if (has && box.text.isNullOrEmpty()) box.showDropDown() }
+    }
+
+    private fun clearSenderFields() {
+        senderNameInput.setText("")
+        senderAddrInput.setText("")
+        packageInput.setText("")
+        serviceInput.setText("")
+    }
+
+    /** لیست‌های چهار باکس رو (بسته به قیمت ثابت/متغیر) تو پس‌زمینه از assets می‌خونه. */
+    private fun loadSenderLists() {
+        val seq = ++listsLoadSeq
+        val asset = listAssets.getOrElse(selectedPriceTypeIndex) { listAssets[0] }
+        Thread {
+            val m = try { SearchAdapter.loadLists(this, asset) } catch (e: Exception) { emptyMap() }
+            runOnUiThread {
+                if (seq != listsLoadSeq) return@runOnUiThread
+                senderNameAdapter.setItems(m["A"].orEmpty())
+                senderAddrAdapter.setItems(m["B"].orEmpty())
+                packageAdapter.setItems(m["C"].orEmpty())
+                serviceAdapter.setItems(m["J"].orEmpty())
+            }
+        }.start()
+    }
+
+    private fun checkBox(layout: TextInputLayout, box: AutoCompleteTextView, ad: SearchAdapter, label: String): String? {
+        layout.error = null
+        val t = box.text?.toString()?.trim().orEmpty()
+        if (t.isEmpty()) {
+            layout.error = "$label رو انتخاب کن"
+            return null
+        }
+        val orig = ad.original(t)
+        if (orig == null) {
+            layout.error = "این مورد تو لیست اکسل نیست - از پیشنهادها انتخاب کن"
+            return null
+        }
+        return orig
     }
 
     private fun loadCities(): List<String> {
@@ -190,16 +272,24 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "اول حداقل یه ردیف به لیست اضافه کن.", Toast.LENGTH_SHORT).show()
             return
         }
-        doExport()
+        val sn = checkBox(senderNameLayout, senderNameInput, senderNameAdapter, "نام فرستنده")
+        val sa = checkBox(senderAddrLayout, senderAddrInput, senderAddrAdapter, "عنوان آدرس فرستنده")
+        val pk = checkBox(packageLayout, packageInput, packageAdapter, "عنوان مرسوله")
+        val sv = checkBox(serviceLayout, serviceInput, serviceAdapter, "نوع سرویس")
+        if (sn == null || sa == null || pk == null || sv == null) {
+            Toast.makeText(this, "چهار باکس فرستنده/مرسوله/سرویس رو کامل کن.", Toast.LENGTH_LONG).show()
+            return
+        }
+        doExport(SenderInfo(sn, sa, pk, sv))
     }
 
-    private fun doExport() {
+    private fun doExport(sender: SenderInfo) {
         val priceTag = priceTypeTags.getOrElse(selectedPriceTypeIndex) { "fixed" }
         val templateAsset = priceTypeAssets.getOrElse(selectedPriceTypeIndex) { "template.xlsx" }
         val fileName = "tipax_" + priceTag + "_" + SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date()) + ".xlsx"
         Thread {
             try {
-                val uri = buildExportFile(fileName, templateAsset)
+                val uri = buildExportFile(fileName, templateAsset, sender)
                 runOnUiThread {
                     if (uri != null) {
                         shareFile(uri)
@@ -220,12 +310,12 @@ class MainActivity : AppCompatActivity() {
      * نمی‌مونه که از بیرون دیده بشه، فقط برای یه بار اشتراک‌گذاری ساخته
      * می‌شه. Uri قابل‌اشتراک‌گذاریش (از طریق FileProvider) رو برمی‌گردونه.
      */
-    private fun buildExportFile(fileName: String, templateAsset: String): Uri? {
+    private fun buildExportFile(fileName: String, templateAsset: String, sender: SenderInfo): Uri? {
         val exportsDir = File(filesDir, "exports")
         if (!exportsDir.exists()) exportsDir.mkdirs()
         val file = File(exportsDir, fileName)
         FileOutputStream(file).use { out ->
-            ExcelFiller.build(this, rows.toList(), out, templateAsset)
+            ExcelFiller.build(this, rows.toList(), out, templateAsset, sender)
         }
         return FileProvider.getUriForFile(this, "ir.tipaxrezashahr.excelfiller.fileprovider", file)
     }
