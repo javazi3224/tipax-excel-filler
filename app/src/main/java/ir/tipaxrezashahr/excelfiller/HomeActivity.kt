@@ -9,6 +9,8 @@ class HomeActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home)
+        val ver = try { packageManager.getPackageInfo(packageName, 0).versionName } catch (e: Exception) { "?" }
+        findViewById<android.widget.TextView>(R.id.versionText).text = "نسخه $ver"
         findViewById<android.view.View>(R.id.fixedButton).setOnClickListener { open(0) }
         findViewById<android.view.View>(R.id.variableButton).setOnClickListener { open(1) }
         findViewById<android.view.View>(R.id.cheramButton).setOnClickListener { tool("tool_cheram.html", "چرم دقت") }
