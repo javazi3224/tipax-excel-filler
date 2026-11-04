@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/bg">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:background="@color/brand_green"
+        android:paddingTop="56dp"
+        android:paddingBottom="40dp"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="تیپاکس"
+            android:textSize="40sp"
+            android:textStyle="bold"
+            android:textColor="#ffffff" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="شعبه رضاشهر مشهد"
+            android:textSize="20sp"
+            android:textColor="#ffffff"
+            android:layout_marginTop="4dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="ثبت مرسولات تیپاکس شعبه رضاشهر مشهد"
+            android:textSize="14sp"
+            android:textColor="#d8f0e2"
+            android:gravity="center"
+            android:layout_marginTop="16dp" />
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_vertical"
+        android:padding="24dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="نوع قیمت‌گذاری رو انتخاب کن"
+            android:textSize="15sp"
+            android:textColor="@color/text_muted"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginBottom="16dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/fixedButton"
+            android:layout_width="match_parent"
+            android:layout_height="72dp"
+            android:text="قیمت ثابت"
+            android:textSize="20sp"
+            android:backgroundTint="@color/brand_green"
+            android:layout_marginBottom="16dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/variableButton"
+            android:layout_width="match_parent"
+            android:layout_height="72dp"
+            android:text="قیمت متغیر"
+            android:textSize="20sp"
+            android:backgroundTint="@color/brand_green_dark" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="ابزارهای تبدیل فایل اکسل مشتری"
+            android:textSize="15sp"
+            android:textColor="@color/text_muted"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="28dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/cheramButton"
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:text="چرم دقت"
+            android:textSize="18sp"
+            android:backgroundTint="#37474f"
+            android:layout_marginTop="16dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/telegramJeepButton"
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:text="تلگرام جیپ"
+            android:textSize="18sp"
+            android:backgroundTint="#37474f"
+            android:layout_marginTop="16dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/jeepButton"
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:text="جیپ"
+            android:textSize="18sp"
+            android:backgroundTint="#37474f"
+            android:layout_marginTop="16dp" />
+    </LinearLayout>
+    </ScrollView>
+</LinearLayout>

@@ -23,19 +23,11 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="فرم سریع مرسولات تیپاکس"
+                android:id="@+id/screenTitle"
+                android:text="ثبت مرسولات تیپاکس"
                 android:textSize="20sp"
                 android:textStyle="bold"
                 android:textColor="@color/text_main" />
-
-            <TextView
-                android:id="@+id/changePasswordText"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="تغییر رمز"
-                android:textSize="12sp"
-                android:textColor="@color/brand_green"
-                android:padding="4dp" />
         </LinearLayout>
 
         <TextView
@@ -138,30 +130,6 @@
             android:layout_height="wrap_content"
             android:nestedScrollingEnabled="false"
             android:layout_marginBottom="16dp" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="نوع قیمت‌گذاری"
-            android:textSize="13sp"
-            android:textColor="@color/text_main"
-            android:layout_marginBottom="4dp" />
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/priceTypeLayout"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp">
-
-            <AutoCompleteTextView
-                android:id="@+id/priceTypeInput"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="none"
-                android:focusable="false"
-                android:focusableInTouchMode="false" />
-        </com.google.android.material.textfield.TextInputLayout>
 
         <TextView
             android:layout_width="wrap_content"
