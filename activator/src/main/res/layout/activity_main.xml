@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:background="@color/bg">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="فعال‌ساز تیپاکس"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="@color/brand_green"
+            android:layout_marginTop="24dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="کد گوشی‌ای که کاربر از اپ «ثبت مرسولات تیپاکس» فرستاده رو اینجا وارد کن تا کد فعال‌سازی همون گوشی ساخته بشه. هر کد فقط برای همون یه گوشی کار می‌کنه. این اپ اینترنت لازم نداره."
+            android:textSize="13sp"
+            android:textColor="@color/text_muted"
+            android:lineSpacingExtra="4dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="20dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="کد گوشی"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_main"
+            android:layout_marginBottom="6dp" />
+
+        <EditText
+            android:id="@+id/deviceCodeInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="مثلاً A1B2-C3D4"
+            android:inputType="textCapCharacters|textNoSuggestions"
+            android:maxLength="9"
+            android:textSize="22sp"
+            android:letterSpacing="0.1"
+            android:layoutDirection="ltr"
+            android:textDirection="ltr"
+            android:gravity="center"
+            android:padding="14dp"
+            android:background="@android:drawable/edit_text" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/generateButton"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:text="ساخت کد فعال‌سازی"
+            android:textSize="17sp"
+            android:backgroundTint="@color/brand_green"
+            android:layout_marginTop="16dp" />
+
+        <TextView
+            android:id="@+id/errorText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/danger"
+            android:textSize="13sp"
+            android:layout_marginTop="10dp" />
+
+        <LinearLayout
+            android:id="@+id/resultBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:visibility="gone"
+            android:padding="18dp"
+            android:background="@color/card_bg"
+            android:layout_marginTop="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="کد فعال‌سازی:"
+                android:textSize="13sp"
+                android:textColor="@color/text_muted" />
+
+            <TextView
+                android:id="@+id/codeText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="40sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.15"
+                android:textColor="@color/brand_green"
+                android:textIsSelectable="true"
+                android:layout_marginTop="6dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="12dp">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/copyButton"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="کپی"
+                    android:layout_marginEnd="6dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/shareButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:backgroundTint="@color/brand_green"
+                    android:text="ارسال"
+                    android:layout_marginStart="6dp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/versionText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="13sp"
+            android:textColor="@color/text_muted"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="32dp" />
+    </LinearLayout>
+</ScrollView>
